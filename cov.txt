@@ -1,0 +1,263 @@
++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++       REPORT INFO       ++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
+
+
+SUMMARY
+===============================================
+|     Property     |          Value           |
+===============================================
+| User             | runner                   |
+| Host             | c81166313804             |
+| Tool             | Riviera-PRO 2023.04      |
+| Report file      | /home/runner/cov.txt     |
+| Report date      | 2026-01-08 19:14         |
+| Report arguments | -verbose                 |
+| Input file       | /home/runner/fcover.acdb |
+| Input file date  | 2026-01-08 19:14         |
+| Number of tests  | 1                        |
+===============================================
+
+
+TEST DETAILS
+==============================================
+| Property |              Value              |
+==============================================
+| Test     | fcover.acdb:fcover              |
+| Status   | Ok                              |
+| Args     | asim +access+r                  |
+| Simtime  | 10990000 ps                     |
+| Cputime  | 1.824 s                         |
+| Seed     | 1                               |
+| Date     | 2026-01-08 19:14                |
+| User     | runner                          |
+| Host     | c81166313804                    |
+| Host os  | Linux64                         |
+| Tool     | Riviera-PRO 2023.04 (simulator) |
+==============================================
+
+
++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++     DESIGN HIERARCHY    ++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
+
+
+CUMULATIVE SUMMARY
+=============================================
+|    Coverage Type    | Weight | Hits/Total |
+=============================================
+| Covergroup Coverage |      1 |    93.666% |
+|---------------------|--------|------------|
+| Types               |        |      0 / 1 |
+=============================================
+CUMULATIVE INSTANCE-BASED COVERAGE: 93.666%
+COVERED INSTANCES: 0 / 1
+FILES: 1
+
+
+CLASS - /monitor : work.monitor
+
+
+    SUMMARY
+    =============================================
+    |    Coverage Type    | Weight | Hits/Total |
+    =============================================
+    | Covergroup Coverage |      1 |    93.666% |
+    |---------------------|--------|------------|
+    | Types               |        |      0 / 1 |
+    =============================================
+    WEIGHTED AVERAGE LOCAL: 93.666%
+
+
+    COVERGROUP COVERAGE
+    =========================================================================
+    |             Covergroup              |   Hits   |  Goal /  |  Status   |
+    |                                     |          | At Least |           |
+    =========================================================================
+    | TYPE /monitor/fifo_cg               |  93.666% | 100.000% | Uncovered |
+    =========================================================================
+    | INSTANCE <UNNAMED1>                 |  93.666% | 100.000% | Uncovered |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_op        | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin idle                            |      129 |        1 | Covered   |
+    | bin write                           |      129 |        1 | Covered   |
+    | bin read                            |      115 |        1 | Covered   |
+    | bin simul_rw                        |       30 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_empty     | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin empty_low                       |      332 |        1 | Covered   |
+    | bin empty_high                      |       71 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_full      | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin full_low                        |      231 |        1 | Covered   |
+    | bin full_high                       |      172 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_overflow  | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin ov_low                          |      319 |        1 | Covered   |
+    | bin ov_high                         |       84 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_underflow | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin uf_seen                         |      403 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_din       | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin low                             |      153 |        1 | Covered   |
+    | bin mid                             |      119 |        1 | Covered   |
+    | bin hig                             |      131 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | CROSS <UNNAMED1>::x_op_empty        | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin <write,empty_low>               |      128 |        1 | Covered   |
+    | bin <write,empty_high>              |        1 |        1 | Covered   |
+    | bin <read,empty_low>                |       46 |        1 | Covered   |
+    | bin <read,empty_high>               |       69 |        1 | Covered   |
+    | bin <simul_rw,empty_low>            |       29 |        1 | Covered   |
+    | bin <simul_rw,empty_high>           |        1 |        1 | Covered   |
+    | ignore bin idle_cases               |      129 |    -     | Occurred  |
+    |-------------------------------------|----------|----------|-----------|
+    | CROSS <UNNAMED1>::x_op_full         |  83.333% | 100.000% | Uncovered |
+    |-------------------------------------|----------|----------|-----------|
+    | bin <write,full_low>                |       45 |        1 | Covered   |
+    | bin <write,full_high>               |       84 |        1 | Covered   |
+    | bin <read,full_low>                 |      113 |        1 | Covered   |
+    | bin <read,full_high>                |        2 |        1 | Covered   |
+    | bin <simul_rw,full_low>             |       30 |        1 | Covered   |
+    | ignore bin idle_cases               |      129 |    -     | Occurred  |
+    |-------------------------------------|----------|----------|-----------|
+    | CROSS <UNNAMED1>::x_overflow_check  |  53.333% | 100.000% | Uncovered |
+    |-------------------------------------|----------|----------|-----------|
+    | bin <idle,full_low,ov_low>          |       43 |        1 | Covered   |
+    | bin <idle,full_high,ov_low>         |        2 |        1 | Covered   |
+    | bin <idle,full_high,ov_high>        |       84 |        1 | Covered   |
+    | bin <write,full_low,ov_low>         |       45 |        1 | Covered   |
+    | bin <read,full_low,ov_low>          |      113 |        1 | Covered   |
+    | bin <read,full_high,ov_low>         |        2 |        1 | Covered   |
+    | bin <simul_rw,full_low,ov_low>      |       30 |        1 | Covered   |
+    | bin ov_event                        |       84 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | CROSS <UNNAMED1>::x_underflow_check | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin <read,empty_high,uf_seen>       |       69 |        1 | Covered   |
+    | bin <simul_rw,empty_high,uf_seen>   |        1 |        1 | Covered   |
+    | ignore bin no_read                  |      258 |    -     | Occurred  |
+    | ignore bin not_empty                |      332 |    -     | Occurred  |
+    =========================================================================
+
+
++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++       DESIGN UNITS      ++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
+
+
+CUMULATIVE SUMMARY
+=============================================
+|    Coverage Type    | Weight | Hits/Total |
+=============================================
+| Covergroup Coverage |      1 |    93.666% |
+|---------------------|--------|------------|
+| Types               |        |      0 / 1 |
+=============================================
+CUMULATIVE DESIGN-BASED COVERAGE: 93.666%
+COVERED DESIGN UNITS: 0 / 1
+FILES: 1
+
+
+CLASS - work.monitor
+
+
+    SUMMARY
+    =============================================
+    |    Coverage Type    | Weight | Hits/Total |
+    =============================================
+    | Covergroup Coverage |      1 |    93.666% |
+    |---------------------|--------|------------|
+    | Types               |        |      0 / 1 |
+    =============================================
+    WEIGHTED AVERAGE: 93.666%
+
+
+    COVERGROUP COVERAGE
+    =========================================================================
+    |             Covergroup              |   Hits   |  Goal /  |  Status   |
+    |                                     |          | At Least |           |
+    =========================================================================
+    | TYPE /monitor/fifo_cg               |  93.666% | 100.000% | Uncovered |
+    =========================================================================
+    | INSTANCE <UNNAMED1>                 |  93.666% | 100.000% | Uncovered |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_op        | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin idle                            |      129 |        1 | Covered   |
+    | bin write                           |      129 |        1 | Covered   |
+    | bin read                            |      115 |        1 | Covered   |
+    | bin simul_rw                        |       30 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_empty     | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin empty_low                       |      332 |        1 | Covered   |
+    | bin empty_high                      |       71 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_full      | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin full_low                        |      231 |        1 | Covered   |
+    | bin full_high                       |      172 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_overflow  | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin ov_low                          |      319 |        1 | Covered   |
+    | bin ov_high                         |       84 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_underflow | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin uf_seen                         |      403 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | COVERPOINT <UNNAMED1>::cp_din       | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin low                             |      153 |        1 | Covered   |
+    | bin mid                             |      119 |        1 | Covered   |
+    | bin hig                             |      131 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | CROSS <UNNAMED1>::x_op_empty        | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin <write,empty_low>               |      128 |        1 | Covered   |
+    | bin <write,empty_high>              |        1 |        1 | Covered   |
+    | bin <read,empty_low>                |       46 |        1 | Covered   |
+    | bin <read,empty_high>               |       69 |        1 | Covered   |
+    | bin <simul_rw,empty_low>            |       29 |        1 | Covered   |
+    | bin <simul_rw,empty_high>           |        1 |        1 | Covered   |
+    | ignore bin idle_cases               |      129 |    -     | Occurred  |
+    |-------------------------------------|----------|----------|-----------|
+    | CROSS <UNNAMED1>::x_op_full         |  83.333% | 100.000% | Uncovered |
+    |-------------------------------------|----------|----------|-----------|
+    | bin <write,full_low>                |       45 |        1 | Covered   |
+    | bin <write,full_high>               |       84 |        1 | Covered   |
+    | bin <read,full_low>                 |      113 |        1 | Covered   |
+    | bin <read,full_high>                |        2 |        1 | Covered   |
+    | bin <simul_rw,full_low>             |       30 |        1 | Covered   |
+    | ignore bin idle_cases               |      129 |    -     | Occurred  |
+    |-------------------------------------|----------|----------|-----------|
+    | CROSS <UNNAMED1>::x_overflow_check  |  53.333% | 100.000% | Uncovered |
+    |-------------------------------------|----------|----------|-----------|
+    | bin <idle,full_low,ov_low>          |       43 |        1 | Covered   |
+    | bin <idle,full_high,ov_low>         |        2 |        1 | Covered   |
+    | bin <idle,full_high,ov_high>        |       84 |        1 | Covered   |
+    | bin <write,full_low,ov_low>         |       45 |        1 | Covered   |
+    | bin <read,full_low,ov_low>          |      113 |        1 | Covered   |
+    | bin <read,full_high,ov_low>         |        2 |        1 | Covered   |
+    | bin <simul_rw,full_low,ov_low>      |       30 |        1 | Covered   |
+    | bin ov_event                        |       84 |        1 | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | CROSS <UNNAMED1>::x_underflow_check | 100.000% | 100.000% | Covered   |
+    |-------------------------------------|----------|----------|-----------|
+    | bin <read,empty_high,uf_seen>       |       69 |        1 | Covered   |
+    | bin <simul_rw,empty_high,uf_seen>   |        1 |        1 | Covered   |
+    | ignore bin no_read                  |      258 |    -     | Occurred  |
+    | ignore bin not_empty                |      332 |    -     | Occurred  |
+    =========================================================================
+
+
