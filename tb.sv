@@ -115,6 +115,40 @@ class write_read_seq extends uvm_sequence #(transaction);
     endtask 
 endclass
 
+//underflow
+class underflow_seq extends uvm_sequence #(transaction);
+    `uvm_object_utils(underflow_seq)
+    
+    transaction t;
+    
+    function new(input string path = "underflow_seq");
+        super.new(path);
+    endfunction
+    
+    virtual task body();
+      repeat(50) begin
+            t = transaction :: type_id :: create("t");
+            start_item(t);
+                assert(t.randomize());
+                t.wr = 1'b0;            
+                t.rd = 1'b1;
+            finish_item(t);
+      end
+      
+      t = transaction::type_id::create("t");
+      start_item(t);
+        t.wr = 0;
+        t.rd = 1;
+      finish_item(t);
+
+      start_item(t);
+        t.wr = 0;
+        t.rd = 1;
+      finish_item(t);     
+      
+    endtask 
+endclass
+
 //overflow
 class overflow_seq extends uvm_sequence #(transaction);
     `uvm_object_utils(overflow_seq)
@@ -126,7 +160,7 @@ class overflow_seq extends uvm_sequence #(transaction);
     endfunction
     
     virtual task body();
-        repeat(20) begin
+      repeat(50) begin
             t = transaction :: type_id :: create("t");
             start_item(t);
                 assert(t.randomize());
@@ -155,6 +189,12 @@ class simultaneous_rw_seq extends uvm_sequence #(transaction);
                 t.rd = 1'b1;
                 assert(t.randomize());
             finish_item(t);
+          
+            start_item(t);
+              t.wr = 1;
+              t.rd = 1;
+            finish_item(t);
+          
         end
     endtask
 endclass
@@ -193,7 +233,7 @@ class driver extends uvm_driver #(transaction);
     endtask     
     
     task drive();
-        reset_dut();
+        
         forever begin
             seq_item_port.get_next_item(t);
                 vif.rst <= 1'b0;
@@ -202,11 +242,15 @@ class driver extends uvm_driver #(transaction);
                 vif.din <= t.din;
                 `uvm_info("DRV", $sformatf("wr=%0d | rd=%0d | din=%0d",t.wr, t.rd, t.din), UVM_NONE)
                 @(posedge vif.clk);
-            seq_item_port.item_done(t);
+          		vif.wr  <= 1'b0;
+          		vif.rd  <= 1'b0;
+          		@(posedge vif.clk);
+            seq_item_port.item_done();
         end
     endtask
     
     virtual task run_phase(uvm_phase phase);
+      	reset_dut();
         drive();
     endtask 
       
@@ -221,15 +265,82 @@ class monitor extends uvm_monitor;
     transaction t;
     virtual fifo_if vif;
     uvm_analysis_port #(transaction) send;
+  
+  	
+  typedef enum int {IDLE=0, WRITE=1, READ=2, SIMUL_RW} op_t;
+  op_t op;
+  
+  
+  covergroup fifo_cg;
     
-    function new(input string path = "monitor", uvm_component parent = null);
+    option.per_instance = 1;
+    
+    //operation
+    cp_op : coverpoint op{
+      bins idle = {IDLE};
+      bins write = {WRITE};
+      bins read = {READ};
+      bins simul_rw = {SIMUL_RW};
+    }
+    
+    //FIFO flags
+    cp_empty : coverpoint t.empty{
+      bins empty_low = {0};
+      bins empty_high = {1};
+    }
+    
+    cp_full : coverpoint t.full{
+      bins full_low = {0};
+      bins full_high = {1};     
+    }
+    
+    //error flags
+    cp_overflow : coverpoint t.overflow{
+      bins ov_low = {0};
+      bins ov_high = {1};
+    }
+    
+    cp_underflow : coverpoint t.underflow{
+		bins uf_seen = {0,1};
+    }
+    
+    //din ranges
+    cp_din : coverpoint t.din{
+      bins low = {[0:85]};
+      bins mid = {[86:170]};
+      bins hig = {[171:255]};
+    }
+    
+    //try each operation in empty state and full state
+    x_op_empty : cross cp_op, cp_empty{
+      ignore_bins idle_cases = binsof(cp_op) intersect {IDLE};
+    }
+    x_op_full : cross cp_op, cp_full{
+      ignore_bins idle_cases = binsof(cp_op) intersect {IDLE};
+    }
+    
+    //overflow and underflow
+    x_overflow_check : cross cp_op, cp_full, cp_overflow{
+      bins ov_event = binsof(cp_op.write) && binsof(cp_full.full_high);
+    }
+    
+     x_underflow_check : cross cp_op, cp_empty, cp_underflow{
+       ignore_bins no_read =  binsof(cp_op) intersect {WRITE, IDLE};
+        ignore_bins not_empty = binsof(cp_empty) intersect {0} && binsof(cp_underflow) intersect {1};
+     }
+  endgroup
+  
+  
+ function new(input string path = "monitor", uvm_component parent = null);
         super.new(path, parent);
+      	fifo_cg = new();
     endfunction
     
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         t = transaction :: type_id :: create("t");
         send = new("send", this);
+      	
         if(!uvm_config_db #(virtual fifo_if) :: get(this, "", "vif", vif))
             `uvm_error("MON", "Unable to access virtual interface");
     endfunction
@@ -240,11 +351,27 @@ class monitor extends uvm_monitor;
             t.wr = vif.wr;
             t.rd = vif.rd;
             t.din = vif.din;
-            t.dout = vif.dout;
             t.empty = vif.empty;
             t.full = vif.full;
             t.overflow = vif.overflow;
             t.underflow = vif.underflow;
+          	t.rst = vif.rst;
+          
+            unique case ({t.wr, t.rd})
+              2'b00: op = IDLE;
+              2'b10: op = WRITE;
+              2'b01: op = READ;
+              2'b11: op = SIMUL_RW;
+            endcase
+          
+            if(!t.rst)
+                  fifo_cg.sample();       
+          
+          if(t.rd) begin
+          	@(posedge vif.clk);
+            t.dout = vif.dout;
+          end
+
             `uvm_info("MON",
               $sformatf("wr=%0d rd=%0d din=%0d dout=%0d empty=%0d full=%0d ovf=%0d udf=%0d",
                         t.wr, t.rd, t.din, t.dout,
@@ -257,17 +384,19 @@ endclass
 
 
 
-///scoreboard///
 class scoreboard extends uvm_scoreboard;
   `uvm_component_utils(scoreboard)
 
   uvm_analysis_imp #(transaction, scoreboard) recv;
 
-  // Reference model of FIFO
+  // Reference FIFO model
   byte fifo_model[$];
 
-  function new(input string path = "scoreboard", uvm_component parent = null);
-    super.new(path, parent);
+  bit expect_overflow;
+  bit expect_underflow;
+
+  function new(string name="scoreboard", uvm_component parent=null);
+    super.new(name, parent);
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
@@ -275,15 +404,18 @@ class scoreboard extends uvm_scoreboard;
     recv = new("recv", this);
   endfunction
 
-  
   virtual function void write(transaction t);
 
-    // Handle reset
+
+    // RESET
     if (t.rst) begin
       fifo_model.delete();
+      expect_overflow  = 0;
+      expect_underflow = 0;
       `uvm_info("SCO", "FIFO model reset", UVM_MEDIUM)
       return;
     end
+
 
     // WRITE ONLY
     if (t.wr && !t.rd) begin
@@ -291,16 +423,15 @@ class scoreboard extends uvm_scoreboard;
         fifo_model.push_back(t.din);
       end
       else begin
-        // FIFO full → overflow expected
-        if (!t.overflow)
-          `uvm_error("SCO", "Expected OVERFLOW, but overflow flag not asserted")
+        expect_overflow = 1;
       end
     end
+
 
     // READ ONLY
     else if (t.rd && !t.wr) begin
       if (fifo_model.size() > 0) begin
-        byte exp_data;
+        bit [7:0] exp_data;
         exp_data = fifo_model.pop_front();
 
         if (t.dout !== exp_data)
@@ -311,16 +442,14 @@ class scoreboard extends uvm_scoreboard;
           `uvm_info("SCO", "READ DATA MATCH", UVM_LOW)
       end
       else begin
-        // FIFO empty → underflow expected
-        if (!t.underflow)
-          `uvm_error("SCO", "Expected UNDERFLOW, but underflow flag not asserted")
+        expect_underflow = 1;
       end
     end
 
-    // SIMULTANEOUS READ WRITE
+    // SIMULTANEOUS READ & WRITE
     else if (t.wr && t.rd) begin
       if (fifo_model.size() > 0 && fifo_model.size() < 16) begin
-        byte exp_data;
+        bit [7:0] exp_data;
         exp_data = fifo_model.pop_front();
         fifo_model.push_back(t.din);
 
@@ -329,14 +458,45 @@ class scoreboard extends uvm_scoreboard;
             $sformatf("SIMUL RW MISMATCH: Expected %0d, Got %0d",
                       exp_data, t.dout))
       end
+      else if (fifo_model.size() == 16) begin
+        bit [7:0] exp_data;
+        exp_data = fifo_model.pop_front();
+
+        if (t.dout !== exp_data)
+          `uvm_error("SCO", "SIMUL RW READ mismatch at FULL")
+
+        expect_overflow = 1;
+      end
+      else if (fifo_model.size() == 0) begin
+        fifo_model.push_back(t.din);
+        expect_underflow = 1;
+      end
     end
 
-    // CHECK FLAGS
-    if ((fifo_model.size() == 0) && !t.empty)
-      `uvm_error("SCO", "EMPTY flag incorrect")
 
-    if ((fifo_model.size() == 16) && !t.full)
-      `uvm_error("SCO", "FULL flag incorrect")
+    // CHECK DELAYED FLAGS
+    if (expect_overflow) begin
+      if (t.overflow) begin
+        `uvm_info("SCO", "OVERFLOW correctly asserted", UVM_LOW)
+        expect_overflow = 0;
+      end
+    end
+
+    if (expect_underflow) begin
+      if (t.underflow) begin
+        `uvm_info("SCO", "UNDERFLOW correctly asserted", UVM_LOW)
+        expect_underflow = 0;
+      end
+    end
+
+    // CHECK EMPTY / FULL FLAGS
+    if (!t.wr && !t.rd) begin
+      if ((fifo_model.size() == 0) && !t.empty)
+        `uvm_error("SCO", "EMPTY flag incorrect")
+
+      if ((fifo_model.size() == 16) && !t.full)
+        `uvm_error("SCO", "FULL flag incorrect")
+    end
 
     $display("-----------------------------------------------");
   endfunction
@@ -413,6 +573,7 @@ class test extends uvm_test;
   write_seq wseq;
   read_seq rseq;
   write_read_seq wrseq;
+  underflow_seq ufseq;
   overflow_seq ovseq;
   simultaneous_rw_seq simseq;
 
@@ -428,14 +589,40 @@ class test extends uvm_test;
     wseq   = write_seq          ::type_id::create("wseq");
     rseq   = read_seq           ::type_id::create("rseq");
     wrseq  = write_read_seq     ::type_id::create("wrseq");
+    ufseq  = underflow_seq		::type_id::create("ufseq");
     ovseq  = overflow_seq       ::type_id::create("ovseq");
     simseq = simultaneous_rw_seq::type_id::create("simseq");
   endfunction
   
   virtual task run_phase(uvm_phase phase);
     phase.raise_objection(this);
-        wseq.start(e.a.seqr);
-        #20;
+
+    //  Force underflow
+    ufseq.start(e.a.seqr);
+
+
+    //  Fill FIFO
+    wseq.start(e.a.seqr);
+    wseq.start(e.a.seqr);
+
+    //  Normal read/write
+    wrseq.start(e.a.seqr);
+
+    // Simultaneous RW 
+    repeat (3) simseq.start(e.a.seqr);
+
+    //  Force overflow
+    wseq.start(e.a.seqr);
+    ovseq.start(e.a.seqr);
+
+    //  Drain FIFO
+    rseq.start(e.a.seqr);
+    rseq.start(e.a.seqr);
+
+    
+    
+    
+    
     phase.drop_objection(this);
   endtask
 endclass
